@@ -7,7 +7,7 @@ from langgraph.graph import StateGraph, START, END
 from .graph.state import AgentState
 from .graph.nodes import call_model, call_tools, route_to_tools
 from Pages.data_models import InputData
-from IPython.display import Image, display
+# from IPython.display import Image, display
 
 class PythonChatbot:
     def __init__(self):
