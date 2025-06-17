@@ -116,10 +116,10 @@ with tab1:
         st.info("No CSV files available. Please upload some files first.")
 
 with tab2:
-    # Debug file paths and InputData instances
-    for file in st.session_state.get('selected_files', []):
-        path = os.path.abspath(os.path.join("uploads", file))
-        print(f"File: {file}, Path: {path}, Exists: {os.path.exists(path)}")
+    # # Debug file paths and InputData instances
+    # for file in st.session_state.get('selected_files', []):
+    #     path = os.path.abspath(os.path.join("uploads", file))
+    #     print(f"File: {file}, Path: {path}, Exists: {os.path.exists(path)}")
 
     def on_submit_user_query():
         user_query = st.session_state['user_input']
@@ -131,8 +131,6 @@ with tab2:
             ) 
             for file in selected_files
         ]
-        print("Input data list:", input_data_list)
-        print("User query:", user_query)
         st.session_state.visualisation_chatbot.user_sent_message(user_query, input_data=input_data_list)
 
     if 'selected_files' in st.session_state and st.session_state['selected_files']:

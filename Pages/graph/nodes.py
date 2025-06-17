@@ -6,6 +6,7 @@ import json
 from typing import Literal
 from .tools import complete_python_task
 #from langgraph.tools import ToolInvocation, ToolExecutor
+#from langgraph.prebuilt.tool_node.ToolNode import ToolNode
 from langgraph.prebuilt import ToolNode
 
 import os
@@ -14,9 +15,10 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Configure the ChatOpenAI with Google Gemini model and API key
 llm = ChatGoogleGenerativeAI(
-    model="google/gemini-2.5-flash-preview-05-20",
+    model="gemini-2.5-flash-preview-05-20",
     temperature=0,
-    google_api_key="AIzaSyAGHny8arM_Q6JpiLmtwmoGRNIbhOuzP0I"
+    google_api_key="AIzaSyD56a63YJALLPt_DJdfEg36YuGBe4L60yU",
+    timeout=30
 )
 
 tools = [complete_python_task]
@@ -38,19 +40,33 @@ model = chat_template | model
 
 def create_data_summary(state: AgentState) -> str:
     summary = ""
-    for data in state["input_data"]:
-        try:
-            # Read the file content
-            with open(data.data_path, "r") as file:
-                content = file.read()
-            summary += (
-                f"\n\nVariable: {data.variable_name}\n"
-                f"Description: {data.data_description}\n"
-                f"Data:\n{content}\n"
-            )
-        except Exception as e:
-            summary += f"\n\nError reading {data.variable_name}: {str(e)}"
+    variables = []
+    for d in state["input_data"]:
+        variables.append(d.variable_name)
+        summary += f"\n\nVariable: {d.variable_name}\n"
+        summary += f"Description: {d.data_description}"
+    
+    if "current_variables" in state:
+        remaining_variables = [v for v in state["current_variables"] if v not in variables]
+        for v in remaining_variables:
+            summary += f"\n\nVariable: {v}"
+    # print(summary)  # Commented out the print statement
     return summary
+
+    # summary = ""
+    # for data in state["input_data"]:
+    #     try:
+    #         # Read the file content
+    #         with open(data.data_path, "r") as file:
+    #             content = file.read()
+    #         summary += (
+    #             f"\n\nVariable: {data.variable_name}\n"
+    #             f"Description: {data.data_description}\n"
+    #             f"Data:\n{content}\n"
+    #         )
+    #     except Exception as e:
+    #         summary += f"\n\nError reading {data.variable_name}: {str(e)}"
+    # return summary
 
 def route_to_tools(
     state: AgentState,
@@ -80,20 +96,20 @@ def call_model(state: AgentState):
     return {"messages": [llm_outputs], "intermediate_outputs": [current_data_message.content]}
 
 def call_tools(state: AgentState):
-    """Call the tools using the updated ToolNode approach"""
+    """Call the tools using the standard ToolNode approach"""
     return tool_node.invoke(state)
 
     # last_message = state["messages"][-1]
     # tool_invocations = []
     # if isinstance(last_message, AIMessage) and hasattr(last_message, 'tool_calls'):
     #     tool_invocations = [
-    #         ToolInvocation(
+    #         tool_node.ToolInvocation(
     #             tool=tool_call["name"],
     #             tool_input={**tool_call["args"], "graph_state": state}
     #         ) for tool_call in last_message.tool_calls
     #     ]
 
-    # responses = tool_executor.batch(tool_invocations, return_exceptions=True)
+    # responses = tool_node.batch(tool_invocations, return_exceptions=True)
     # tool_messages = []
     # state_updates = {}
 
@@ -113,4 +129,3 @@ def call_tools(state: AgentState):
 
     # state_updates["messages"] = tool_messages 
     # return state_updates
-
